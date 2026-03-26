@@ -44,3 +44,7 @@ Append a short bullet under **Session Summaries** at the bottom of this file aft
 ### 2026-03-26 — Marker label instead of InfoWindow for venue names
 
 - Removed **InfoWindow**-based name pills (close buttons); venue names use **`Marker`** **`label`** + **`.marker-label`** CSS only.
+
+### 2026-03-26 — Google Maps key injection (Vercel)
+
+- **`api/index.js`**: read **`index.html`** via **`path.join(process.cwd(), 'index.html')`** so the serverless function finds the file on Vercel; placeholder replace unchanged (**`split('GMAPS_KEY_PLACEHOLDER').join(process.env.GMAPS_KEY)`**).
