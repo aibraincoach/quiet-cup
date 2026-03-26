@@ -24,13 +24,20 @@
         width: 100%;
         height: 100%;
       }
+      .marker-label {
+        background: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-top: 32px;
+        white-space: nowrap;
+      }
     </style>
   </head>
   <body class="bg-stone-100 antialiased">
-    <!-- Paste your Google Maps JavaScript API key (Places enabled). Not secret-safe in static HTML — restrict key by HTTP referrer in Google Cloud. -->
+    <!-- Production: `GMAPS_KEY_PLACEHOLDER` is replaced by `api/index.js` from env `GMAPS_KEY`. For local file open, set window.QUIET_CUP_GMAPS_KEY before load. -->
     <script>
       window.QUIET_CUP_GMAPS_KEY =
-        window.QUIET_CUP_GMAPS_KEY || "AIzaSyADf1IWEMYtddDVAEF0N8Y55fCtJXMJ4XY";
+        window.QUIET_CUP_GMAPS_KEY || "GMAPS_KEY_PLACEHOLDER";
     </script>
 
     <main class="relative h-[100dvh] w-full">
@@ -261,7 +268,6 @@
         var searchOverride = null;
         var cafes = [];
         var markersById = {};
-        var venueNameInfoByPlaceId = {};
         var busynessByPlaceId = {};
         var selectedPlace = null;
         var sheetAbort = null;
@@ -269,36 +275,14 @@
         var placesLoading = false;
         var cafesEnrichGeneration = 0;
 
-        function venueNamePillHtml(name) {
-          var el = document.createElement("div");
-          el.style.cssText =
-            'font-family:"DM Sans",system-ui,sans-serif;font-size:11px;line-height:1.2;' +
-            "background:#fff;padding:4px;border-radius:4px;color:rgba(0,0,0,0.88);" +
-            "max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" +
-            "box-shadow:0 1px 3px rgba(0,0,0,0.12)";
-          el.textContent = name;
-          return el;
-        }
-
-        function openVenueNameLabel(placeId, marker, name) {
-          var existing = venueNameInfoByPlaceId[placeId];
-          if (existing) {
-            delete venueNameInfoByPlaceId[placeId];
-            existing.close();
-          }
-          var iw = new google.maps.InfoWindow({
-            disableAutoPan: true,
-            pixelOffset: new google.maps.Size(0, 18),
-            content: venueNamePillHtml(name),
-          });
-          iw.addListener("close", function () {
-            if (venueNameInfoByPlaceId[placeId] !== iw) return;
-            var mk = markersById[placeId];
-            if (!mk || !map) return;
-            iw.open({ map: map, anchor: mk });
-          });
-          iw.open({ map: map, anchor: marker });
-          venueNameInfoByPlaceId[placeId] = iw;
+        function venueNameMarkerLabel(name) {
+          return {
+            text: name,
+            className: "marker-label",
+            color: "#333333",
+            fontSize: "11px",
+            fontFamily: "DM Sans, sans-serif",
+          };
         }
 
         function preEnrichBusynessFromCafes() {
@@ -474,6 +458,7 @@
               m = new google.maps.Marker({
                 map: map,
                 position: c.location,
+                label: venueNameMarkerLabel(c.name),
               });
               (function (place) {
                 m.addListener("click", function () {
@@ -481,9 +466,9 @@
                 });
               })(c);
               markersById[c.placeId] = m;
-              openVenueNameLabel(c.placeId, m, c.name);
             } else {
               m.setPosition(c.location);
+              m.setLabel(venueNameMarkerLabel(c.name));
             }
             m.setIcon({
               url: markerIconDataUrl(color, size, label),
@@ -496,11 +481,6 @@
           }
           for (var id in markersById) {
             if (!nextIds[id]) {
-              var nw = venueNameInfoByPlaceId[id];
-              if (nw) {
-                nw.close();
-                delete venueNameInfoByPlaceId[id];
-              }
               markersById[id].setMap(null);
               delete markersById[id];
             }
