@@ -10,6 +10,8 @@
 - ✅ **2026-03-26** — **`api/busyness.js`**: BestTime **forecast** + **live**, **`day_raw` → clock hours**, flexible live field parsing, **30 min** in-memory cache.
 - ✅ **2026-03-26** — **`vercel.json`** SPA rewrite for static **`index.html`** + `/api/*` functions.
 - ✅ **2026-03-26** — Root docs: **`PRD.md`**, **`claude.md`**, **`planning.md`**, **`tasks.md`**.
+- ✅ **2026-03-26** — **Marker labels** — busyness number (or **`?`**) in white, centered in the circle marker SVG.
+- ✅ **2026-03-26** — **Graceful BestTime failure** — API returns **`noData`** payload; sheet shows venue + “No busyness data available”, no meter/chart.
 
 ## Up Next
 
