@@ -39,4 +39,8 @@ Append a short bullet under **Session Summaries** at the bottom of this file aft
 ### 2026-03-26 — Pre-enrichment + floating venue names
 
 - After **`nearbySearch`**, the client staggers **`POST /api/busyness`** (200 ms apart) for every café and updates markers as results land (**`Promise.allSettled`**).
-- Each marker has a persistent **`google.maps.InfoWindow`** name pill (white, 11px DM Sans) anchored under the dot; **`close`** is re-opened so the label stays visible when the map would otherwise dismiss it.
+- Each marker shows the venue name via **`google.maps.Marker`** **`label`** ( **`className: 'marker-label'`**, 11px **DM Sans**, **`#333`** text) with pill styling in **`index.html`** CSS — no **InfoWindow** for names.
+
+### 2026-03-26 — Marker label instead of InfoWindow for venue names
+
+- Removed **InfoWindow**-based name pills (close buttons); venue names use **`Marker`** **`label`** + **`.marker-label`** CSS only.
