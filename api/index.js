@@ -9,7 +9,7 @@ module.exports = function handler(req, res) {
     return;
   }
 
-  const htmlPath = path.join(__dirname, "..", "index.html");
+  const htmlPath = path.join(process.cwd(), "index.html");
   let html;
   try {
     html = fs.readFileSync(htmlPath, "utf8");
