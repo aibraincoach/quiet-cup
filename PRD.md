@@ -19,15 +19,15 @@ The repository currently ships under the working title **Street Whisperer** in t
 
 | Layer | Implementation |
 |--------|----------------|
-| Frontend | **Single `index.template.html`** (vanilla JS); Vercel serves it through **`api/index.js`** with env-injected Maps key. |
+| Frontend | **Single `index.template.html`** (vanilla JS); **`npm run build`** emits **`index.html`** with **`GMAPS_KEY`** substituted; Vercel serves it as static `/`. |
 | Styling | **Tailwind CSS** via **CDN** (`cdn.tailwindcss.com`); **DM Sans** from Google Fonts. |
 | Map | **Google Maps JavaScript API** loaded by a dynamic `<script>` tag with `libraries=places`; map options include a **minimal custom style** (muted basemap, POI labels reduced). |
 | Places | **`google.maps.places`**: `PlacesService.nearbySearch`, `Autocomplete` bound to the map. |
-| API key (Maps) | **`GMAPS_KEY`** in Vercel env; **`api/index.js`** replaces `GMAPS_KEY_PLACEHOLDER` in the template (browser-visible key; restrict by HTTP referrer in Google Cloud). |
+| API key (Maps) | **`GMAPS_KEY`** in Vercel env (available at **build** time); **`build-index.js`** replaces `GMAPS_KEY_PLACEHOLDER` in the template (browser-visible key; restrict by HTTP referrer in Google Cloud). |
 | Backend | **`api/busyness.js`** — Vercel **Node** serverless function (no `package.json` in repo). |
 | Busyness data | **BestTime.app** REST API: **new forecast** (`POST /api/v1/forecasts`) and **live** (`POST /api/v1/forecasts/live`) using `BESTTIME_PRIVATE_KEY` (server env only). |
 | Caching | In-memory **`Map`** in the serverless handler, **~30 minutes** TTL per venue name + address key. |
-| Routing / deploy | **`vercel.json`**: rewrite **`/`** and non-`/api/*` paths to **`/api`** so static hosting does not bypass key injection. |
+| Routing / deploy | **`vercel.json`**: default routing; static **`index.html`** for **`/`**; **`api/busyness.js`** under **`/api/busyness`**. |
 
 > **Note:** An earlier iteration used **Next.js 14 App Router** and **`@googlemaps/js-api-loader`**. The **current codebase** does not include Next.js or that loader; the PRD above matches **this** tree only.
 
