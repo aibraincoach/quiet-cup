@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Quiet Cup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        font-family: "DM Sans", system-ui, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body class="bg-stone-100 antialiased">
+    <!-- Paste your Google Maps JavaScript API key (Places enabled). Not secret-safe in static HTML — restrict key by HTTP referrer in Google Cloud. -->
+    <script>
+      window.QUIET_CUP_GMAPS_KEY =
+        window.QUIET_CUP_GMAPS_KEY || "AIzaSyADf1IWEMYtddDVAEF0N8Y55fCtJXMJ4XY";
+    </script>
+
+    <main class="relative h-[100dvh] w-full">
+      <div id="map" class="absolute inset-0"></div>
+
+      <div
+        id="gmaps-missing"
+        class="absolute inset-0 z-10 hidden items-center justify-center bg-stone-200 px-6 text-center text-sm text-black/60"
+      >
+        Set
+        <code class="mx-1 rounded bg-black/10 px-1">window.QUIET_CUP_GMAPS_KEY</code>
+        in a script before the map loads (see top of this file).
+      </div>
+
+      <div
+        id="search-wrap"
+        class="pointer-events-auto absolute left-1/2 top-4 z-30 w-[min(92vw,420px)] -translate-x-1/2"
+      >
+        <input
+          id="search-input"
+          type="search"
+          placeholder="Search address or place"
+          autocomplete="off"
+          class="w-full rounded-full border border-black/10 bg-white px-5 py-3 text-sm text-black/90 shadow-md outline-none placeholder:text-black/40 focus:border-black/20 focus:shadow-lg"
+        />
+      </div>
+
+      <div
+        id="loading-pill"
+        class="pointer-events-none absolute bottom-24 left-1/2 z-20 hidden -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-xs font-medium text-white"
+      >
+        Loading…
+      </div>
+
+      <div
+        id="geo-banner"
+        class="absolute bottom-24 left-1/2 z-20 hidden w-[min(90vw,360px)] -translate-x-1/2 rounded-2xl bg-white/90 px-4 py-3 text-center text-sm text-black/70 shadow-lg backdrop-blur"
+      ></div>
+
+      <div
+        id="places-error"
+        class="absolute bottom-24 left-1/2 z-20 hidden max-w-sm -translate-x-1/2 rounded-2xl bg-amber-50 px-4 py-2 text-center text-xs text-amber-900"
+      ></div>
+
+      <div
+        id="sheet-backdrop"
+        class="fixed inset-0 z-40 hidden bg-black/20 backdrop-blur-[2px]"
+        aria-hidden="true"
+      ></div>
+      <div
+        id="sheet"
+        class="fixed inset-x-0 bottom-0 z-50 hidden max-h-[40vh] rounded-t-3xl border border-black/5 bg-white/85 shadow-[0_-8px_40px_rgba(0,0,0,0.12)] backdrop-blur-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sheet-title"
+      >
+        <div class="mx-auto flex w-full max-w-lg flex-col gap-3 px-5 pb-6 pt-3">
+          <div class="mx-auto h-1 w-10 rounded-full bg-black/15"></div>
+          <div>
+            <h2
+              id="sheet-title"
+              class="text-lg font-semibold tracking-tight text-black/90"
+            ></h2>
+            <p id="sheet-address" class="mt-0.5 text-sm text-black/55"></p>
+          </div>
+          <p id="sheet-loading" class="hidden text-sm text-black/50">Loading busyness…</p>
+          <p id="sheet-error" class="hidden text-sm text-red-600/90"></p>
+          <div id="sheet-body" class="hidden">
+            <div class="flex flex-wrap items-baseline gap-2">
+              <span
+                id="sheet-pct"
+                class="text-3xl font-semibold tabular-nums text-black/90"
+              ></span>
+              <span class="text-sm text-black/50">live busyness</span>
+              <span
+                id="sheet-open-badge"
+                class="ml-auto hidden rounded-full bg-black/5 px-2 py-0.5 text-xs font-medium text-black/60"
+              ></span>
+            </div>
+            <p id="sheet-label" class="text-sm font-medium text-black/70"></p>
+            <div>
+              <p
+                class="mb-1 text-xs font-medium uppercase tracking-wide text-black/40"
+              >
+                Today (by hour)
+              </p>
+              <div id="chart" class="w-full overflow-x-auto pb-1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        var FALLBACK = { lat: 37.7749, lng: -122.4194 };
+        var CAFE_RADIUS_M = 800;
+        var MINIMAL_STYLE = [
+          { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+          { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+          {
+            featureType: "transit",
+            elementType: "labels.icon",
+            stylers: [{ visibility: "off" }],
+          },
+          {
+            featureType: "road",
+            elementType: "labels.icon",
+            stylers: [{ visibility: "off" }],
+          },
+          {
+            featureType: "administrative",
+            elementType: "labels",
+            stylers: [{ visibility: "simplified" }],
+          },
+          { featureType: "water", stylers: [{ color: "#cfe8f3" }] },
+          { featureType: "landscape", stylers: [{ color: "#f5f5f4" }] },
+        ];
+
+        function busynessColor(pct) {
+          if (pct < 33) return "#22c55e";
+          if (pct < 66) return "#f59e0b";
+          return "#ef4444";
+        }
+
+        function markerIconDataUrl(fillColor, size) {
+          var r = size === 32 ? 12 : 10;
+          var c = size / 2;
+          var svg =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="' +
+            size +
+            '" height="' +
+            size +
+            '" viewBox="0 0 ' +
+            size +
+            " " +
+            size +
+            '"><circle cx="' +
+            c +
+            '" cy="' +
+            c +
+            '" r="' +
+            r +
+            '" fill="' +
+            fillColor +
+            '" stroke="white" stroke-width="2"/></svg>';
+          return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+        }
+
+        function hourLabel(h) {
+          var ampm = h >= 12 ? "p" : "a";
+          var h12 = h % 12 === 0 ? 12 : h % 12;
+          return h12 + ampm;
+        }
+
+        function renderChart(container, hourly, currentHour) {
+          var max = 1;
+          for (var i = 0; i < hourly.length; i++) {
+            if (hourly[i] > max) max = hourly[i];
+          }
+          var wrap = document.createElement("div");
+          wrap.className = "flex min-w-[520px] items-end gap-0.5 pt-2";
+          for (var j = 0; j < 24; j++) {
+            var v = hourly[j] || 0;
+            var hPct = Math.round((v / max) * 100);
+            var isNow = j === currentHour;
+            var col = document.createElement("div");
+            col.className = "flex flex-1 flex-col items-center gap-1";
+            var track = document.createElement("div");
+            track.className = "relative w-full rounded-sm bg-black/5";
+            track.style.height = "72px";
+            track.title = hourLabel(j) + ": " + Math.round(v) + "%";
+            var bar = document.createElement("div");
+            bar.className =
+              "absolute bottom-0 left-0 right-0 rounded-sm " +
+              (isNow ? "bg-amber-500" : "bg-emerald-600/70");
+            bar.style.height = hPct + "%";
+            if (v > 0) bar.style.minHeight = "4px";
+            track.appendChild(bar);
+            var lbl = document.createElement("span");
+            lbl.className =
+              "text-[10px] leading-none " +
+              (isNow ? "font-semibold text-amber-700" : "text-black/45");
+            lbl.textContent = hourLabel(j);
+            col.appendChild(track);
+            col.appendChild(lbl);
+            wrap.appendChild(col);
+          }
+          container.innerHTML = "";
+          container.appendChild(wrap);
+        }
+
+        var elMap = document.getElementById("map");
+        var elMissing = document.getElementById("gmaps-missing");
+        var elLoading = document.getElementById("loading-pill");
+        var elGeo = document.getElementById("geo-banner");
+        var elPlacesErr = document.getElementById("places-error");
+        var elSearch = document.getElementById("search-input");
+        var elBackdrop = document.getElementById("sheet-backdrop");
+        var elSheet = document.getElementById("sheet");
+        var elSheetTitle = document.getElementById("sheet-title");
+        var elSheetAddr = document.getElementById("sheet-address");
+        var elSheetLoading = document.getElementById("sheet-loading");
+        var elSheetError = document.getElementById("sheet-error");
+        var elSheetBody = document.getElementById("sheet-body");
+        var elSheetPct = document.getElementById("sheet-pct");
+        var elSheetLabel = document.getElementById("sheet-label");
+        var elSheetOpen = document.getElementById("sheet-open-badge");
+        var elChart = document.getElementById("chart");
+
+        var map = null;
+        var center = null;
+        var searchOverride = null;
+        var cafes = [];
+        var markersById = {};
+        var busynessByPlaceId = {};
+        var selectedPlace = null;
+        var sheetAbort = null;
+        var geoResolved = false;
+        var placesLoading = false;
+
+        function setLoading(show) {
+          elLoading.classList.toggle("hidden", !show);
+        }
+
+        function updateLoading() {
+          setLoading(!geoResolved || placesLoading);
+        }
+
+        function openSheet(place) {
+          selectedPlace = place;
+          elBackdrop.classList.remove("hidden");
+          elSheet.classList.remove("hidden");
+          elSheetTitle.textContent = place.name;
+          elSheetAddr.textContent = place.address;
+          elSheetLoading.classList.remove("hidden");
+          elSheetError.classList.add("hidden");
+          elSheetBody.classList.add("hidden");
+          elSheetError.textContent = "";
+          if (sheetAbort) sheetAbort.abort();
+          sheetAbort = new AbortController();
+          var sig = sheetAbort.signal;
+
+          fetch("/api/busyness", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              venue_name: place.name,
+              venue_address: place.address,
+            }),
+            signal: sig,
+          })
+            .then(function (r) {
+              return r.json().then(function (data) {
+                if (!r.ok) {
+                  throw new Error(
+                    typeof data.error === "string" ? data.error : "Request failed"
+                  );
+                }
+                return data;
+              });
+            })
+            .then(function (data) {
+              elSheetLoading.classList.add("hidden");
+              elSheetBody.classList.remove("hidden");
+              var live = typeof data.live === "number" ? data.live : null;
+              var fth =
+                typeof data.forecastThisHour === "number"
+                  ? data.forecastThisHour
+                  : null;
+              var forecast = Array.isArray(data.forecast) ? data.forecast : [];
+              var day =
+                forecast.length === 24
+                  ? forecast
+                  : Array.from({ length: 24 }, function (_, i) {
+                      return forecast[i] || 0;
+                    });
+              var pct =
+                live != null ? live : fth != null ? fth : "—";
+              elSheetPct.textContent =
+                typeof pct === "number" ? Math.round(pct) + "%" : pct;
+              elSheetLabel.textContent =
+                typeof data.label === "string" ? data.label : "";
+              if (data.venueOpen) {
+                elSheetOpen.textContent = data.venueOpen;
+                elSheetOpen.classList.remove("hidden");
+              } else {
+                elSheetOpen.classList.add("hidden");
+              }
+              var now = new Date();
+              renderChart(elChart, day, now.getHours());
+              var markerPct =
+                live != null ? live : fth != null ? fth : 50;
+              busynessByPlaceId[place.placeId] = markerPct;
+              syncMarkers();
+            })
+            .catch(function (e) {
+              if (e.name === "AbortError") return;
+              elSheetLoading.classList.add("hidden");
+              elSheetError.classList.remove("hidden");
+              elSheetError.textContent =
+                e.message || "Failed to load busyness";
+            });
+        }
+
+        function closeSheet() {
+          elBackdrop.classList.add("hidden");
+          elSheet.classList.add("hidden");
+          if (sheetAbort) sheetAbort.abort();
+          sheetAbort = null;
+          selectedPlace = null;
+          syncMarkers();
+        }
+
+        elBackdrop.addEventListener("click", closeSheet);
+
+        function syncMarkers() {
+          var nextIds = {};
+          for (var i = 0; i < cafes.length; i++) {
+            var c = cafes[i];
+            nextIds[c.placeId] = true;
+            var pct = busynessByPlaceId[c.placeId];
+            if (pct == null) pct = 50;
+            var color = busynessColor(pct);
+            var isSel =
+              selectedPlace && selectedPlace.placeId === c.placeId;
+            var size = isSel ? 32 : 28;
+            var m = markersById[c.placeId];
+            if (!m) {
+              m = new google.maps.Marker({
+                map: map,
+                position: c.location,
+              });
+              (function (place) {
+                m.addListener("click", function () {
+                  openSheet(place);
+                });
+              })(c);
+              markersById[c.placeId] = m;
+            } else {
+              m.setPosition(c.location);
+            }
+            m.setIcon({
+              url: markerIconDataUrl(color, size),
+              scaledSize: new google.maps.Size(size, size),
+              anchor: new google.maps.Point(size / 2, size / 2),
+            });
+            m.setZIndex(
+              isSel ? google.maps.Marker.MAX_ZINDEX + 1 : undefined
+            );
+          }
+          for (var id in markersById) {
+            if (!nextIds[id]) {
+              markersById[id].setMap(null);
+              delete markersById[id];
+            }
+          }
+        }
+
+        function runPlacesSearch() {
+          if (!map || !center) return;
+          placesLoading = true;
+          updateLoading();
+          elPlacesErr.classList.add("hidden");
+          var svc = new google.maps.places.PlacesService(map);
+          svc.nearbySearch(
+            {
+              location: center,
+              radius: CAFE_RADIUS_M,
+              type: "cafe",
+            },
+            function (results, status) {
+              placesLoading = false;
+              updateLoading();
+              if (
+                status !== google.maps.places.PlacesServiceStatus.OK &&
+                status !== google.maps.places.PlacesServiceStatus.ZERO_RESULTS
+              ) {
+                elPlacesErr.textContent = "Places search failed: " + status;
+                elPlacesErr.classList.remove("hidden");
+                cafes = [];
+                syncMarkers();
+                return;
+              }
+              cafes = [];
+              var list = results || [];
+              for (var i = 0; i < list.length; i++) {
+                var p = list[i];
+                if (!p.place_id || !p.geometry || !p.geometry.location || !p.name)
+                  continue;
+                var address =
+                  p.vicinity ||
+                  p.formatted_address ||
+                  p.name + (p.vicinity ? ", " + p.vicinity : "");
+                cafes.push({
+                  placeId: p.place_id,
+                  name: p.name,
+                  address: address,
+                  location: {
+                    lat: p.geometry.location.lat(),
+                    lng: p.geometry.location.lng(),
+                  },
+                });
+              }
+              syncMarkers();
+            }
+          );
+        }
+
+        function applyCenter() {
+          center = searchOverride || userCoords || FALLBACK;
+          if (map) {
+            map.panTo(center);
+            map.setZoom(15);
+            runPlacesSearch();
+          }
+        }
+
+        var userCoords = null;
+
+        function startGeolocation() {
+          if (!navigator.geolocation) {
+            elGeo.textContent =
+              "Geolocation is not supported. Map defaulted to San Francisco.";
+            elGeo.classList.remove("hidden");
+            geoResolved = true;
+            updateLoading();
+            applyCenter();
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            function (pos) {
+              userCoords = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+              };
+              geoResolved = true;
+              updateLoading();
+              if (!searchOverride) applyCenter();
+            },
+            function (err) {
+              elGeo.textContent =
+                (err && err.message) ||
+                "Could not get location. Map defaulted to San Francisco; enable location for your area.";
+              elGeo.classList.remove("hidden");
+              geoResolved = true;
+              updateLoading();
+              if (!searchOverride) applyCenter();
+            },
+            { enableHighAccuracy: true, maximumAge: 60000, timeout: 15000 }
+          );
+        }
+
+        function initMap() {
+          elMissing.classList.add("hidden");
+          elMap.classList.remove("hidden");
+          map = new google.maps.Map(elMap, {
+            center: searchOverride || userCoords || FALLBACK,
+            zoom: 15,
+            disableDefaultUI: true,
+            zoomControl: true,
+            gestureHandling: "greedy",
+            styles: MINIMAL_STYLE,
+          });
+          center = searchOverride || userCoords || FALLBACK;
+
+          var ac = new google.maps.places.Autocomplete(elSearch, {
+            fields: ["geometry", "formatted_address", "name"],
+          });
+          ac.bindTo("bounds", map);
+          ac.addListener("place_changed", function () {
+            var place = ac.getPlace();
+            var loc = place.geometry && place.geometry.location;
+            if (!loc) return;
+            searchOverride = { lat: loc.lat(), lng: loc.lng() };
+            map.panTo(searchOverride);
+            map.setZoom(15);
+            applyCenter();
+          });
+
+          runPlacesSearch();
+          startGeolocation();
+        }
+
+        window.initQuietCupMap = function () {
+          initMap();
+        };
+
+        var key = window.QUIET_CUP_GMAPS_KEY;
+        if (!key) {
+          elMissing.classList.remove("hidden");
+          elMap.classList.add("hidden");
+          return;
+        }
+
+        var s = document.createElement("script");
+        s.async = true;
+        s.defer = true;
+        s.src =
+          "https://maps.googleapis.com/maps/api/js?key=" +
+          encodeURIComponent(key) +
+          "&libraries=places&callback=initQuietCupMap";
+        document.head.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>
