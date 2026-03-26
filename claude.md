@@ -49,3 +49,7 @@ Append a short bullet under **Session Summaries** at the bottom of this file aft
 
 - **`api/index.js`**: read template from disk, replace **`GMAPS_KEY_PLACEHOLDER`** with **`process.env.GMAPS_KEY`**.
 - **Root cause of blank Maps on Vercel:** static **`index.html`** was served for **`/`** before rewrites, so the API injector never ran. Renamed template to **`index.template.html`** (not a static entry) and set **`vercel.json`** SPA fallback to **`/api`** so all app routes get injected HTML.
+
+### 2026-03-26 — Merge injection fix to main
+
+- **`vercel.json`** on **`main`**: **`/`** and **`/((?!api/).*)`** both rewrite to **`/api`** (no static **`index.html`** at repo root). Merged **`cursor/google-maps-key-injection-1d33`** → **`main`** and pushed so production **`/`** uses **`api/index.js`** key injection.
