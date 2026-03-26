@@ -261,11 +261,95 @@
         var searchOverride = null;
         var cafes = [];
         var markersById = {};
+        var venueNameInfoByPlaceId = {};
         var busynessByPlaceId = {};
         var selectedPlace = null;
         var sheetAbort = null;
         var geoResolved = false;
         var placesLoading = false;
+        var cafesEnrichGeneration = 0;
+
+        function venueNamePillHtml(name) {
+          var el = document.createElement("div");
+          el.style.cssText =
+            'font-family:"DM Sans",system-ui,sans-serif;font-size:11px;line-height:1.2;' +
+            "background:#fff;padding:4px;border-radius:4px;color:rgba(0,0,0,0.88);" +
+            "max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" +
+            "box-shadow:0 1px 3px rgba(0,0,0,0.12)";
+          el.textContent = name;
+          return el;
+        }
+
+        function openVenueNameLabel(placeId, marker, name) {
+          var existing = venueNameInfoByPlaceId[placeId];
+          if (existing) {
+            delete venueNameInfoByPlaceId[placeId];
+            existing.close();
+          }
+          var iw = new google.maps.InfoWindow({
+            disableAutoPan: true,
+            pixelOffset: new google.maps.Size(0, 18),
+            content: venueNamePillHtml(name),
+          });
+          iw.addListener("close", function () {
+            if (venueNameInfoByPlaceId[placeId] !== iw) return;
+            var mk = markersById[placeId];
+            if (!mk || !map) return;
+            iw.open({ map: map, anchor: mk });
+          });
+          iw.open({ map: map, anchor: marker });
+          venueNameInfoByPlaceId[placeId] = iw;
+        }
+
+        function preEnrichBusynessFromCafes() {
+          var gen = ++cafesEnrichGeneration;
+          var list = cafes.slice();
+          var promises = list.map(function (place, i) {
+            return new Promise(function (resolve) {
+              setTimeout(function () {
+                if (gen !== cafesEnrichGeneration) {
+                  resolve({ status: "skipped" });
+                  return;
+                }
+                fetch("/api/busyness", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    venue_name: place.name,
+                    venue_address: place.address,
+                  }),
+                })
+                  .then(function (r) {
+                    return r.json().then(function (data) {
+                      return { ok: r.ok, data: data };
+                    });
+                  })
+                  .then(function (res) {
+                    if (gen !== cafesEnrichGeneration) return;
+                    if (!res.ok) return;
+                    var data = res.data;
+                    if (data && data.noData === true) return;
+                    var live = typeof data.live === "number" ? data.live : null;
+                    var fth =
+                      typeof data.forecastThisHour === "number"
+                        ? data.forecastThisHour
+                        : null;
+                    var markerPct =
+                      live != null ? live : fth != null ? fth : null;
+                    if (markerPct != null) {
+                      busynessByPlaceId[place.placeId] = markerPct;
+                      syncMarkers();
+                    }
+                  })
+                  .catch(function () {})
+                  .finally(function () {
+                    resolve({ status: "done" });
+                  });
+              }, i * 200);
+            });
+          });
+          Promise.allSettled(promises);
+        }
 
         function setLoading(show) {
           elLoading.classList.toggle("hidden", !show);
@@ -397,6 +481,7 @@
                 });
               })(c);
               markersById[c.placeId] = m;
+              openVenueNameLabel(c.placeId, m, c.name);
             } else {
               m.setPosition(c.location);
             }
@@ -411,6 +496,11 @@
           }
           for (var id in markersById) {
             if (!nextIds[id]) {
+              var nw = venueNameInfoByPlaceId[id];
+              if (nw) {
+                nw.close();
+                delete venueNameInfoByPlaceId[id];
+              }
               markersById[id].setMap(null);
               delete markersById[id];
             }
@@ -439,6 +529,7 @@
                 elPlacesErr.textContent = "Places search failed: " + status;
                 elPlacesErr.classList.remove("hidden");
                 cafes = [];
+                busynessByPlaceId = {};
                 syncMarkers();
                 return;
               }
@@ -462,7 +553,9 @@
                   },
                 });
               }
+              busynessByPlaceId = {};
               syncMarkers();
+              preEnrichBusynessFromCafes();
             }
           );
         }

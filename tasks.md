@@ -12,6 +12,8 @@
 - ✅ **2026-03-26** — Root docs: **`PRD.md`**, **`claude.md`**, **`planning.md`**, **`tasks.md`**.
 - ✅ **2026-03-26** — **Marker labels** — busyness number (or **`?`**) in white, centered in the circle marker SVG.
 - ✅ **2026-03-26** — **Graceful BestTime failure** — API returns **`noData`** payload; sheet shows venue + “No busyness data available”, no meter/chart.
+- ✅ **2026-03-26** — **Pre-enrichment** — After each Places café search, **`/api/busyness`** is called for every result in the background (**200 ms** stagger, **`Promise.allSettled`**); markers update color + number as each response arrives.
+- ✅ **2026-03-26** — **Venue name labels** — Each marker gets a persistent **`InfoWindow`** (**`disableAutoPan: true`**) with a small white pill (11px **DM Sans**) showing the café name under the dot.
 
 ## Up Next
 
