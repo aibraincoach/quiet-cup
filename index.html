@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Street Whisperer</title>
+    <title>Quiet Cup</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -29,7 +29,7 @@
   <body class="bg-stone-100 antialiased">
     <!-- Paste your Google Maps JavaScript API key (Places enabled). Not secret-safe in static HTML — restrict key by HTTP referrer in Google Cloud. -->
     <script>
-      window.STREET_WHISPERER_GMAPS_KEY = window.STREET_WHISPERER_GMAPS_KEY || "";
+      window.QUIET_CUP_GMAPS_KEY = window.QUIET_CUP_GMAPS_KEY || "";
     </script>
 
     <main class="relative h-[100dvh] w-full">
@@ -40,7 +40,7 @@
         class="absolute inset-0 z-10 hidden items-center justify-center bg-stone-200 px-6 text-center text-sm text-black/60"
       >
         Set
-        <code class="mx-1 rounded bg-black/10 px-1">window.STREET_WHISPERER_GMAPS_KEY</code>
+        <code class="mx-1 rounded bg-black/10 px-1">window.QUIET_CUP_GMAPS_KEY</code>
         in a script before the map loads (see top of this file).
       </div>
 
@@ -514,11 +514,11 @@
           startGeolocation();
         }
 
-        window.initStreetWhispererMap = function () {
+        window.initQuietCupMap = function () {
           initMap();
         };
 
-        var key = window.STREET_WHISPERER_GMAPS_KEY;
+        var key = window.QUIET_CUP_GMAPS_KEY;
         if (!key) {
           elMissing.classList.remove("hidden");
           elMap.classList.add("hidden");
@@ -531,7 +531,7 @@
         s.src =
           "https://maps.googleapis.com/maps/api/js?key=" +
           encodeURIComponent(key) +
-          "&libraries=places&callback=initStreetWhispererMap";
+          "&libraries=places&callback=initQuietCupMap";
         document.head.appendChild(s);
       })();
     </script>
