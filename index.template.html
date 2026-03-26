@@ -34,7 +34,7 @@
     </style>
   </head>
   <body class="bg-stone-100 antialiased">
-    <!-- Production: served via `/api` rewrite; `api/index.js` replaces `GMAPS_KEY_PLACEHOLDER` from env `GMAPS_KEY`. Local file: set window.QUIET_CUP_GMAPS_KEY before load. -->
+    <!-- Production: `npm run build` writes `index.html` from this template using env `GMAPS_KEY`. Local dev: open `index.template.html` and set window.QUIET_CUP_GMAPS_KEY before load, or run build with GMAPS_KEY set. -->
     <script>
       window.QUIET_CUP_GMAPS_KEY =
         window.QUIET_CUP_GMAPS_KEY || "GMAPS_KEY_PLACEHOLDER";

@@ -4,22 +4,25 @@
 
 ```
 /
-├── index.template.html # Frontend source; `api/index.js` injects `GMAPS_KEY` and serves as HTML
+├── index.template.html # Frontend source (committed)
+├── public/
+│   └── index.html      # Generated at build; gitignored; Vercel `outputDirectory: public`
+├── build-index.js      # `npm run build`: substitute `GMAPS_KEY_PLACEHOLDER` → `process.env.GMAPS_KEY`
+├── package.json        # `build` script for Vercel
 ├── api/
-│   ├── index.js        # Serves injected HTML for `/` and SPA fallback (non-`/api/*` paths)
 │   └── busyness.js     # Vercel serverless: BestTime forecast + live, cache, JSON API
-├── vercel.json         # Rewrite: `/` and non-`/api/*` paths → `/api` (injected app shell)
+├── vercel.json         # `outputDirectory: public` (required when using `npm run build`)
 ├── PRD.md
 ├── claude.md
 ├── planning.md
 └── tasks.md
 ```
 
-No `package.json`, no build step, no framework entrypoints.
+Build step only: **`npm run build`** writes **`public/index.html`** from the template using **`GMAPS_KEY`** (Vercel exposes env vars to the build).
 
 ## Runtime components
 
-### Frontend (`index.template.html`, served via `api/index.js`)
+### Frontend (`index.template.html` → built `public/index.html`)
 
 - **Map:** `google.maps.Map` with custom **style JSON** (muted landscape/water, POI/transit label reduction).
 - **Geolocation:** `navigator.geolocation.getCurrentPosition` with timeout / high accuracy; fallback center **37.7749, -122.4194**.
@@ -46,7 +49,7 @@ No `package.json`, no build step, no framework entrypoints.
 
 ### Deploy (`vercel.json`)
 
-- Single-page rule: anything not under **`api/`** is rewritten to **`/api`** so the same handler injects the Maps key and returns HTML for deep links.
+- **`outputDirectory: public`** so Vercel treats **`npm run build`** output as static files; **`/api/busyness`** remains the serverless route.
 
 ## Data flow (happy path)
 
@@ -74,7 +77,7 @@ flowchart LR
 
 ## Key design decisions
 
-1. **No npm / no bundler** — fastest deploy and edit on constrained devices; tradeoff: Maps key in page config pattern.
+1. **Minimal npm** — one build script, no bundler; Maps key is baked into static HTML at deploy (restrict key by HTTP referrer in Google Cloud).
 2. **Private BestTime key only on server** — client never sees `BESTTIME_PRIVATE_KEY`.
 3. **Server-side cache** — reduces BestTime credit use; **in-memory** only (resets on cold starts).
 4. **Default marker color before fetch** — avoids N parallel forecast calls for every pin on load.
@@ -85,4 +88,4 @@ flowchart LR
 | Variable | Where |
 |----------|--------|
 | `BESTTIME_PRIVATE_KEY` | Server (`api/busyness.js`) |
-| `GMAPS_KEY` | Server (`api/index.js`) — injected into HTML as `window.QUIET_CUP_GMAPS_KEY` |
+| `GMAPS_KEY` | **Build** (`build-index.js`) — substituted into **`public/index.html`** as `window.QUIET_CUP_GMAPS_KEY` |
