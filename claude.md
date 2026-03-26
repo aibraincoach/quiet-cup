@@ -47,4 +47,5 @@ Append a short bullet under **Session Summaries** at the bottom of this file aft
 
 ### 2026-03-26 — Google Maps key injection (Vercel)
 
-- **`api/index.js`**: read **`index.html`** via **`path.join(process.cwd(), 'index.html')`** so the serverless function finds the file on Vercel; placeholder replace unchanged (**`split('GMAPS_KEY_PLACEHOLDER').join(process.env.GMAPS_KEY)`**).
+- **`api/index.js`**: read template from disk, replace **`GMAPS_KEY_PLACEHOLDER`** with **`process.env.GMAPS_KEY`**.
+- **Root cause of blank Maps on Vercel:** static **`index.html`** was served for **`/`** before rewrites, so the API injector never ran. Renamed template to **`index.template.html`** (not a static entry) and set **`vercel.json`** SPA fallback to **`/api`** so all app routes get injected HTML.

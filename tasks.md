@@ -8,12 +8,12 @@
 - ✅ **2026-03-26** — **Custom SVG circle markers** colored by busyness (green / amber / red); default moderate before data.
 - ✅ **2026-03-26** — **Bottom sheet** on marker tap: name, address, live %, label, **24-hour** forecast chart for today.
 - ✅ **2026-03-26** — **`api/busyness.js`**: BestTime **forecast** + **live**, **`day_raw` → clock hours**, flexible live field parsing, **30 min** in-memory cache.
-- ✅ **2026-03-26** — **`vercel.json`** SPA rewrite for static **`index.html`** + `/api/*` functions.
+- ✅ **2026-03-26** — **`vercel.json`** SPA fallback to **`/api`** (injected shell) + **`/api/*`** handlers (**`index.template.html`**, not static **`index.html`**).
 - ✅ **2026-03-26** — Root docs: **`PRD.md`**, **`claude.md`**, **`planning.md`**, **`tasks.md`**.
 - ✅ **2026-03-26** — **Marker labels** — busyness number (or **`?`**) in white, centered in the circle marker SVG.
 - ✅ **2026-03-26** — **Graceful BestTime failure** — API returns **`noData`** payload; sheet shows venue + “No busyness data available”, no meter/chart.
 - ✅ **2026-03-26** — **Pre-enrichment** — After each Places café search, **`/api/busyness`** is called for every result in the background (**200 ms** stagger, **`Promise.allSettled`**); markers update color + number as each response arrives.
-- ✅ **2026-03-26** — **Venue name labels** — Each marker uses **`google.maps.Marker`** **`label`** (**`className: 'marker-label'`**, 11px **DM Sans**, **`#333`**) with pill CSS in **`index.html`** (no **InfoWindow**).
+- ✅ **2026-03-26** — **Venue name labels** — Each marker uses **`google.maps.Marker`** **`label`** (**`className: 'marker-label'`**, 11px **DM Sans**, **`#333`**) with pill CSS in **`index.template.html`** (no **InfoWindow**).
 
 ## Up Next
 

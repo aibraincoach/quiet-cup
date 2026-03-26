@@ -4,10 +4,11 @@
 
 ```
 /
-├── index.html          # Entire frontend: HTML structure, Tailwind CDN, inline CSS, vanilla JS
+├── index.template.html # Frontend source; `api/index.js` injects `GMAPS_KEY` and serves as HTML
 ├── api/
+│   ├── index.js        # Serves injected HTML for `/` and SPA fallback (non-`/api/*` paths)
 │   └── busyness.js     # Vercel serverless: BestTime forecast + live, cache, JSON API
-├── vercel.json         # Rewrite: serve index.html for all paths except /api/*
+├── vercel.json         # Rewrite: `/` and non-`/api/*` paths → `/api` (injected app shell)
 ├── PRD.md
 ├── claude.md
 ├── planning.md
@@ -18,7 +19,7 @@ No `package.json`, no build step, no framework entrypoints.
 
 ## Runtime components
 
-### Frontend (`index.html`)
+### Frontend (`index.template.html`, served via `api/index.js`)
 
 - **Map:** `google.maps.Map` with custom **style JSON** (muted landscape/water, POI/transit label reduction).
 - **Geolocation:** `navigator.geolocation.getCurrentPosition` with timeout / high accuracy; fallback center **37.7749, -122.4194**.
@@ -45,13 +46,13 @@ No `package.json`, no build step, no framework entrypoints.
 
 ### Deploy (`vercel.json`)
 
-- Single-page rule: anything not under **`api/`** is rewritten to **`/index.html`** so deep links still load the app.
+- Single-page rule: anything not under **`api/`** is rewritten to **`/api`** so the same handler injects the Maps key and returns HTML for deep links.
 
 ## Data flow (happy path)
 
 ```mermaid
 flowchart LR
-  subgraph Client["Browser (index.html)"]
+  subgraph Client["Browser (app HTML)"]
     Geo[Geolocation]
     Map[Google Map]
     PS[Places nearbySearch]
@@ -84,5 +85,4 @@ flowchart LR
 | Variable | Where |
 |----------|--------|
 | `BESTTIME_PRIVATE_KEY` | Server (`api/busyness.js`) |
-
-Maps key is **not** an env var in repo code; set **`window.STREET_WHISPERER_GMAPS_KEY`** in `index.html` (or inject at deploy).
+| `GMAPS_KEY` | Server (`api/index.js`) — injected into HTML as `window.QUIET_CUP_GMAPS_KEY` |
