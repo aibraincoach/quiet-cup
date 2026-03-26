@@ -224,10 +224,15 @@ module.exports = async (req, res) => {
     cache.set(ck, { at: Date.now(), body: payload });
     res.statusCode = 200;
     res.end(JSON.stringify(payload));
-  } catch (e) {
-    const msg =
-      e instanceof Error ? e.message : "BestTime request failed";
-    res.statusCode = 502;
-    res.end(JSON.stringify({ error: msg }));
+  } catch {
+    res.statusCode = 200;
+    res.end(
+      JSON.stringify({
+        live: null,
+        forecasted: null,
+        hourly: [],
+        noData: true,
+      })
+    );
   }
 };

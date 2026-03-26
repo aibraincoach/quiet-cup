@@ -98,6 +98,9 @@
           </div>
           <p id="sheet-loading" class="hidden text-sm text-black/50">Loading busyness…</p>
           <p id="sheet-error" class="hidden text-sm text-red-600/90"></p>
+          <p id="sheet-no-data" class="hidden text-sm text-black/60">
+            No busyness data available
+          </p>
           <div id="sheet-body" class="hidden">
             <div class="flex flex-wrap items-baseline gap-2">
               <span
@@ -156,9 +159,12 @@
           return "#ef4444";
         }
 
-        function markerIconDataUrl(fillColor, size) {
+        function markerIconDataUrl(fillColor, size, labelText) {
           var r = size === 32 ? 12 : 10;
           var c = size / 2;
+          var text = String(labelText == null ? "?" : labelText);
+          if (text.length > 3) text = text.slice(0, 3);
+          var fs = text.length <= 1 ? (size === 32 ? 13 : 11) : size === 32 ? 10 : 9;
           var svg =
             '<svg xmlns="http://www.w3.org/2000/svg" width="' +
             size +
@@ -176,7 +182,15 @@
             r +
             '" fill="' +
             fillColor +
-            '" stroke="white" stroke-width="2"/></svg>';
+            '" stroke="white" stroke-width="2"/><text x="' +
+            c +
+            '" y="' +
+            c +
+            '" text-anchor="middle" dominant-baseline="central" fill="white" font-family="system-ui,-apple-system,sans-serif" font-size="' +
+            fs +
+            '" font-weight="600">' +
+            text.replace(/&/g, "&amp;").replace(/</g, "&lt;") +
+            "</text></svg>";
           return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
         }
 
@@ -235,6 +249,7 @@
         var elSheetAddr = document.getElementById("sheet-address");
         var elSheetLoading = document.getElementById("sheet-loading");
         var elSheetError = document.getElementById("sheet-error");
+        var elSheetNoData = document.getElementById("sheet-no-data");
         var elSheetBody = document.getElementById("sheet-body");
         var elSheetPct = document.getElementById("sheet-pct");
         var elSheetLabel = document.getElementById("sheet-label");
@@ -268,6 +283,7 @@
           elSheetAddr.textContent = place.address;
           elSheetLoading.classList.remove("hidden");
           elSheetError.classList.add("hidden");
+          elSheetNoData.classList.add("hidden");
           elSheetBody.classList.add("hidden");
           elSheetError.textContent = "";
           if (sheetAbort) sheetAbort.abort();
@@ -295,6 +311,13 @@
             })
             .then(function (data) {
               elSheetLoading.classList.add("hidden");
+              if (data && data.noData === true) {
+                elSheetError.classList.add("hidden");
+                elSheetBody.classList.add("hidden");
+                elSheetNoData.classList.remove("hidden");
+                return;
+              }
+              elSheetNoData.classList.add("hidden");
               elSheetBody.classList.remove("hidden");
               var live = typeof data.live === "number" ? data.live : null;
               var fth =
@@ -323,13 +346,16 @@
               var now = new Date();
               renderChart(elChart, day, now.getHours());
               var markerPct =
-                live != null ? live : fth != null ? fth : 50;
-              busynessByPlaceId[place.placeId] = markerPct;
+                live != null ? live : fth != null ? fth : null;
+              if (markerPct != null) {
+                busynessByPlaceId[place.placeId] = markerPct;
+              }
               syncMarkers();
             })
             .catch(function (e) {
               if (e.name === "AbortError") return;
               elSheetLoading.classList.add("hidden");
+              elSheetNoData.classList.add("hidden");
               elSheetError.classList.remove("hidden");
               elSheetError.textContent =
                 e.message || "Failed to load busyness";
@@ -353,8 +379,9 @@
             var c = cafes[i];
             nextIds[c.placeId] = true;
             var pct = busynessByPlaceId[c.placeId];
-            if (pct == null) pct = 50;
-            var color = busynessColor(pct);
+            var hasPct = typeof pct === "number" && !Number.isNaN(pct);
+            var color = busynessColor(hasPct ? pct : 50);
+            var label = hasPct ? String(Math.round(pct)) : "?";
             var isSel =
               selectedPlace && selectedPlace.placeId === c.placeId;
             var size = isSel ? 32 : 28;
@@ -374,7 +401,7 @@
               m.setPosition(c.location);
             }
             m.setIcon({
-              url: markerIconDataUrl(color, size),
+              url: markerIconDataUrl(color, size, label),
               scaledSize: new google.maps.Size(size, size),
               anchor: new google.maps.Point(size / 2, size / 2),
             });
