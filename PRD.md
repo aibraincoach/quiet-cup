@@ -19,7 +19,7 @@ The repository currently ships under the working title **Street Whisperer** in t
 
 | Layer | Implementation |
 |--------|----------------|
-| Frontend | **Single `index.template.html`** (vanilla JS); **`npm run build`** emits **`index.html`** with **`GMAPS_KEY`** substituted; Vercel serves it as static `/`. |
+| Frontend | **Single `index.template.html`** (vanilla JS); **`npm run build`** emits **`public/index.html`** with **`GMAPS_KEY`** substituted; Vercel serves it as static **`/`** via **`outputDirectory: public`**. |
 | Styling | **Tailwind CSS** via **CDN** (`cdn.tailwindcss.com`); **DM Sans** from Google Fonts. |
 | Map | **Google Maps JavaScript API** loaded by a dynamic `<script>` tag with `libraries=places`; map options include a **minimal custom style** (muted basemap, POI labels reduced). |
 | Places | **`google.maps.places`**: `PlacesService.nearbySearch`, `Autocomplete` bound to the map. |
@@ -27,7 +27,7 @@ The repository currently ships under the working title **Street Whisperer** in t
 | Backend | **`api/busyness.js`** — Vercel **Node** serverless function (no `package.json` in repo). |
 | Busyness data | **BestTime.app** REST API: **new forecast** (`POST /api/v1/forecasts`) and **live** (`POST /api/v1/forecasts/live`) using `BESTTIME_PRIVATE_KEY` (server env only). |
 | Caching | In-memory **`Map`** in the serverless handler, **~30 minutes** TTL per venue name + address key. |
-| Routing / deploy | **`vercel.json`**: default routing; static **`index.html`** for **`/`**; **`api/busyness.js`** under **`/api/busyness`**. |
+| Routing / deploy | **`vercel.json`**: **`outputDirectory: public`**; static app at **`/`**; **`api/busyness.js`** under **`/api/busyness`**. |
 
 > **Note:** An earlier iteration used **Next.js 14 App Router** and **`@googlemaps/js-api-loader`**. The **current codebase** does not include Next.js or that loader; the PRD above matches **this** tree only.
 

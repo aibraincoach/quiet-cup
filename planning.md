@@ -5,23 +5,24 @@
 ```
 /
 ├── index.template.html # Frontend source (committed)
-├── index.html          # Generated at build; gitignored; Vercel serves `/` as static HTML
+├── public/
+│   └── index.html      # Generated at build; gitignored; Vercel `outputDirectory: public`
 ├── build-index.js      # `npm run build`: substitute `GMAPS_KEY_PLACEHOLDER` → `process.env.GMAPS_KEY`
 ├── package.json        # `build` script for Vercel
 ├── api/
 │   └── busyness.js     # Vercel serverless: BestTime forecast + live, cache, JSON API
-├── vercel.json         # Empty object (default static + `/api/*` functions)
+├── vercel.json         # `outputDirectory: public` (required when using `npm run build`)
 ├── PRD.md
 ├── claude.md
 ├── planning.md
 └── tasks.md
 ```
 
-Build step only: **`npm run build`** writes **`index.html`** from the template using **`GMAPS_KEY`** (Vercel exposes env vars to the build).
+Build step only: **`npm run build`** writes **`public/index.html`** from the template using **`GMAPS_KEY`** (Vercel exposes env vars to the build).
 
 ## Runtime components
 
-### Frontend (`index.template.html` → built `index.html`)
+### Frontend (`index.template.html` → built `public/index.html`)
 
 - **Map:** `google.maps.Map` with custom **style JSON** (muted landscape/water, POI/transit label reduction).
 - **Geolocation:** `navigator.geolocation.getCurrentPosition` with timeout / high accuracy; fallback center **37.7749, -122.4194**.
@@ -48,7 +49,7 @@ Build step only: **`npm run build`** writes **`index.html`** from the template u
 
 ### Deploy (`vercel.json`)
 
-- Static **`index.html`** at repo root after build; **`/api/busyness`** remains the only API route. Deep links to unknown paths are not rewritten (single file at `/`).
+- **`outputDirectory: public`** so Vercel treats **`npm run build`** output as static files; **`/api/busyness`** remains the serverless route.
 
 ## Data flow (happy path)
 
@@ -87,4 +88,4 @@ flowchart LR
 | Variable | Where |
 |----------|--------|
 | `BESTTIME_PRIVATE_KEY` | Server (`api/busyness.js`) |
-| `GMAPS_KEY` | **Build** (`build-index.js`) — substituted into generated `index.html` as `window.QUIET_CUP_GMAPS_KEY` |
+| `GMAPS_KEY` | **Build** (`build-index.js`) — substituted into **`public/index.html`** as `window.QUIET_CUP_GMAPS_KEY` |

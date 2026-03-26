@@ -48,4 +48,4 @@ Append a short bullet under **Session Summaries** at the bottom of this file aft
 ### 2026-03-26 — Google Maps key injection (Vercel)
 
 - **Earlier attempt:** **`api/index.js`** + rewrites to inject **`GMAPS_KEY`** at request time; unreliable when static **`/`** wins over rewrites or the template is missing from the serverless bundle.
-- **Current approach:** **`build-index.js`** + **`npm run build`**: write **`index.html`** from **`index.template.html`** with **`GMAPS_KEY`** substituted at **deploy build** time. Removed **`api/index.js`** and rewrite-heavy **`vercel.json`** so **`/`** is normal static HTML. **`index.html`** is **gitignored**.
+- **Current approach:** **`build-index.js`** + **`npm run build`**: write **`public/index.html`** from **`index.template.html`** with **`GMAPS_KEY`** substituted at **deploy build** time; **`vercel.json`** sets **`outputDirectory: public`** so Vercel accepts the build. **`public/index.html`** is **gitignored**.
