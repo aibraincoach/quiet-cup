@@ -35,3 +35,8 @@ Append a short bullet under **Session Summaries** at the bottom of this file aft
 
 - Map markers use **white numeric labels** inside the colored circle (**`?`** before data is loaded).
 - When BestTime forecast fails, **`api/busyness.js`** returns **`noData: true`** with empty fields; the bottom sheet shows **“No busyness data available”** and hides meter + chart.
+
+### 2026-03-26 — Pre-enrichment + floating venue names
+
+- After **`nearbySearch`**, the client staggers **`POST /api/busyness`** (200 ms apart) for every café and updates markers as results land (**`Promise.allSettled`**).
+- Each marker has a persistent **`google.maps.InfoWindow`** name pill (white, 11px DM Sans) anchored under the dot; **`close`** is re-opened so the label stays visible when the map would otherwise dismiss it.
