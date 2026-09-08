@@ -1,5 +1,11 @@
 # Quiet Cup — Architecture (current repo)
 
+## CI execution decision — 2026-09-08
+
+Actions is disabled. [CI_POLICY.md](CI_POLICY.md) records the owner ruling,
+repository evidence, retained checks and outstanding provider blockers. This
+entry does not mark unverified replacement checks as passed or completed.
+
 ## File tree
 
 ```

@@ -1,5 +1,11 @@
 # Quiet Cup — Tasks
 
+## CI audit and migration — 2026-09-08
+
+Actions is disabled. [CI_POLICY.md](CI_POLICY.md) records the owner ruling,
+repository evidence, retained checks and outstanding provider blockers. This
+entry does not mark unverified replacement checks as passed or completed.
+
 ## Completed
 
 - ✅ **2026-03-26** — Map-first fullscreen UI with **Google Maps** + **Places** (`nearbySearch` cafés, **800 m** radius).
