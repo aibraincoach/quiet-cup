@@ -14,15 +14,23 @@ older instructions to run/re-enable Actions, buy CI capacity, or treat a green
 deployment as proof that unconfigured tests ran. Other product rules remain.
 <!-- END OWNER CI POLICY 2026-09-08 -->
 
-## Session startup
+## Rules
 
-- Always read **`planning.md`** at the start of every new conversation.
-- Always check **`tasks.md`** before starting work.
+1. At the start of every session, read planning.md, then tasks.md, then claude.md.
+2. Before you start work, check tasks.md. Work only on the item you were asked to do.
+3. When you finish an item, mark it done in tasks.md with the date. Add any new items you find, using the three-part format: title, outcome, context.
+4. Never merge, and never push to main. Work on a branch, open a draft PR, list the files you changed, then stop.
+5. Before context is cleared, add a session summary to the end of claude.md.
+6. Code must run on both Vercel and Cloudflare. Don't use platform-only APIs.
+7. Keep scoring and arithmetic in code, not in a model.
 
-## Task hygiene
+## Handover protocol
 
-- Mark completed tasks **immediately** with **✅** and the **date** (ISO or clear calendar date).
-- Add **newly discovered** tasks to **`tasks.md`** (under **Up Next** unless already done).
+1. Every prompt from the PM arrives as a single copy-paste block.
+2. Every reply ends with a receipt: branch, PR link, files changed, what's done, what's blocked.
+
+## File hygiene
+
 - **Never** rename or restructure files without **explicit** instruction from the user.
 
 ## Product naming
@@ -61,3 +69,12 @@ Append a short bullet under **Session Summaries** at the bottom of this file aft
 
 - **Earlier attempt:** **`api/index.js`** + rewrites to inject **`GMAPS_KEY`** at request time; unreliable when static **`/`** wins over rewrites or the template is missing from the serverless bundle.
 - **Current approach:** **`build-index.js`** + **`npm run build`**: write **`public/index.html`** from **`index.template.html`** with **`GMAPS_KEY`** substituted at **deploy build** time; **`vercel.json`** sets **`outputDirectory: public`** so Vercel accepts the build. **`public/index.html`** is **gitignored**.
+
+### 2026-10-06 — Framework reset (docs only, branch `docs/framework-reset`)
+
+- **`planning.md`** rewritten: vision, architecture as built, tech stack, tools, hosting constraint (Vercel or Cloudflare only, no servers), and a **Current state (2026-10-06)** audit: latest `main` commit, branches (no open PRs), tracked files with line counts, env vars, 11 claims checked (10 confirmed, 1 refuted as worded), and key strings in history.
+- **`claude.md`**: replaced "Session startup" and "Task hygiene" with the **Rules** and **Handover protocol** sections; kept the CI policy block, file hygiene and naming.
+- **`AGENTS.md`** created; points agents to `claude.md`.
+- **`PRD.md`**: replaced the stale "Street Whisperer" sentence. No other PRD changes.
+- **Blocked:** `quiet-cup-backlog.md` is not in the repo on any branch, so `tasks.md` was not replaced, QC-001 was not updated, and the PRD was not rewritten. Do these once the file is committed.
+- **Follow-ups:** a Google Maps key (`AIzaSy…`) is in `main`'s history (commit `4e58cca`) and must be rotated or confirmed referrer-restricted. `api/busyness.js` is Vercel-only (Node `req, res`) and breaks rule 6.

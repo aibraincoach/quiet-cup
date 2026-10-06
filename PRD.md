@@ -4,7 +4,7 @@
 
 **Quiet Cup** is a map-first web app that helps people see how busy nearby **cafes** are. The primary signal is **crowd level** (quiet vs busy), surfaced on a fullscreen map with colored markers and a detail panel after the user taps a venue.
 
-The repository currently ships under the working title **Street Whisperer** in the HTML `<title>`; the product name for planning and copy is **Quiet Cup**.
+The app ships as **Quiet Cup** (HTML `<title>`, `index.template.html:6`); use this name in planning and copy.
 
 ## User flow (implemented)
 
