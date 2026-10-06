@@ -78,3 +78,14 @@ Append a short bullet under **Session Summaries** at the bottom of this file aft
 - **`PRD.md`**: replaced the stale "Street Whisperer" sentence. No other PRD changes.
 - **Blocked:** `quiet-cup-backlog.md` is not in the repo on any branch, so `tasks.md` was not replaced, QC-001 was not updated, and the PRD was not rewritten. Do these once the file is committed.
 - **Follow-ups:** a Google Maps key (`AIzaSy…`) is in `main`'s history (commit `4e58cca`) and must be rotated or confirmed referrer-restricted. `api/busyness.js` is Vercel-only (Node `req, res`) and breaks rule 6.
+
+### 2026-10-06 — Backlog and PRD (docs only, branch `docs/framework-reset`, PR #8)
+
+- **`tasks.md`** replaced with the product backlog pasted by the PM (QC-001 to QC-054), kept as written. The 12 completed March items moved, with their dates, into a new **Done** section at the end.
+- Checked the audit findings against QC-001, QC-002 and QC-016. The only missing detail was added to QC-016: the code reads only `BESTTIME_PRIVATE_KEY`; `BESTTIME_PUBLIC_KEY` is unused. No new items created.
+- **`PRD.md`** rewritten from the backlog's "Product definition" and "Constraints": users, 15 user stories, technical requirements, budget, success metrics. Each requirement is labelled built, Phase 1 or later.
+- `quiet-cup-backlog.md` was never committed (the backlog arrived in the prompt), so there was no file to delete.
+- **Follow-ups:**
+  - `planning.md`'s Vision still describes a "quiet café" finder and lists OpenFreeMap as a principle. It needs aligning with the backlog's product definition, and with QC-011's open question about keeping the Google map.
+  - Both "docs out of date" bullets in QC-019 are already fixed by this PR (`PRD.md` and `planning.md` were rewritten). QC-019 can drop them.
+  - QC-003 can be marked done once Raj approves PR #8.
